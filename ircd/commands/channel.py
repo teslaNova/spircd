@@ -56,11 +56,11 @@ class JOINCommand(Command):
         except:
           channel_key = ""
           
-        if channel.limit != 0 and channel.limit == (len(channel.users) + 1):
+        if channel.limit != 0 and channel.limit == (len(channel.get_users()) + 1):
           Response.send_user(sender, 'ERR_CHANNELISFULL', channel_name)
           continue
         
-        if channel.is_banned(sender):
+        if channel.has_banned_user(sender):
           Response.send_user(sender, 'ERR_BANNEDFROMCHAN', channel_name)
           continue
         
@@ -75,7 +75,7 @@ class JOINCommand(Command):
           
       sender.join(channel)
 
-      self.broadcast(sender, [channel_name], channel.users, ignore_sender=False)
+      self.broadcast(sender, [channel_name], (channel.get_users()), ignore_sender=False)
       
       TOPICCommand().evaluate_local(sender, [channel.name])
       #Response.send_user(sender, 'RPL_TOPIC', channel.name, channel.topic)
@@ -103,12 +103,12 @@ class PARTCommand(Command):
       
       channel = Channel.find_channel(channel_name)
       
-      if channel is None or channel.is_user(sender) == False:
+      if channel is None or channel.has_user(sender) == False:
         Response.send_user(sender, 'ERR_NOTONCHANNEL', channel_name)
         continue
       
       sender.leave(channel)
-      self.broadcast(sender, [channel_name] + param[1:], channel.users)
+      self.broadcast(sender, [channel_name] + param[1:], (channel.get_users()))
 
 
 class TOPICCommand(Command):
@@ -137,12 +137,12 @@ class TOPICCommand(Command):
         Response.send_user(sender, 'ERR_NOSUCHCHANNEL', channel_name)
         return
 
-      if channel.is_user(sender) == False:
+      if channel.has_user(sender) == False:
         Response.send_user(sender, 'ERR_NOTONCHANNEL', channel_name)
         return
 
       if len(param) > 1:
-        if channel.is_operator(sender) == False:
+        if channel.has_operator(sender) == False:
           Response.send_user(sender, 'RPL_CHANOPRIVSNEEDED', channel_name)
           return
           
@@ -182,14 +182,14 @@ class NAMESCommand(Command):
           
         user_str = ""
         
-        for user in channel.users:
+        for user in (channel.get_users()):
           if channel.has_voice(user):
             user_str += " +" + user.nick
             
-          elif channel.is_operator(user):
+          elif channel.has_operator(user):
             user_str += " @" + user.nick
             
-          else:
+          elif channel.has_user(user):
             user_str += " " + user.nick
           
         Response.send_user(sender, 'RPL_NAMREPLY', channel_name, user_str.lstrip())

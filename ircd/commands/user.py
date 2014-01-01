@@ -87,7 +87,7 @@ class PRIVMSGCommand(Command):
           Response.send_user(sender, 'ERR_CANNOTSENDTOCHAN', trgt_msk)
           continue # TODO: Channel not implemented yet
         
-        self.broadcast(sender, [channel.name] + message, channel.users)
+        self.broadcast(sender, [channel.name] + message, channel.get_users())
         
       else:  
         target = User.find_user(trgt_msk) # TODO: Check Mask for wildcards and implement missing ERR_WILDTOPLEVEL, ERR_NOTOPLEVEL

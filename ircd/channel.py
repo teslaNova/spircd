@@ -19,8 +19,9 @@ class ChanModeHandler(mode.Handler):
         if user is None:
           continue
           
-        if self.target.is_operator(user) == False:
+        if self.target.has_operator(user) == False and self.target.has_user(user):
           self.target.operator.append(user)
+          self.target.users.remove(user)
 
     elif mode == ChanMode.Voice:
       user_masks = args.split(',')
@@ -31,8 +32,9 @@ class ChanModeHandler(mode.Handler):
         if user is None:
           continue
           
-        if self.target.has_voice(user) == False:
+        if self.target.has_voice(user) == False and self.target.has_user(user):
           self.target.voice.append(user)
+          self.target.users.remove(user)
 
     elif mode == ChanMode.Ban:
       masks = args.split(' ')
@@ -82,16 +84,19 @@ class Channel:
     self.invite = []
     self.mode = ChanMode(ChanModeHandler(self), mode)
     
-  def is_banned(self, user):
+  def get_users(self):
+    return self.users + self.operator + self.voice
+    
+  def has_banned_user(self, user):
     return False
     
-  def is_user(self, user):
-    return len([u for u in self.users if u.nick == user.nick]) != 0
+  def has_user(self, user):
+    return len([u for u in (self.users + self.operator + self.voice) if u.nick == user.nick]) != 0
   
   def has_voice(self, user):
     return len([u for u in self.voice if u.nick == user.nick]) != 0
     
-  def is_operator(self, user):
+  def has_operator(self, user):
     return len([u for u in self.operator if u.nick == user.nick]) != 0
     
   def has_invite(self, user):

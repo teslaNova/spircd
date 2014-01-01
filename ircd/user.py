@@ -67,10 +67,10 @@ class User: # TODO: Client (Socket) stuff to be added
     if channel not in self.channels:
       self.channels.append(channel)
     
-    if channel.users == []:
+    if channel.get_users() == []:
       channel.operator.append(self)
       
-    channel.users.append(self)
+#    channel.users.append(self)
       
   def leave(self, channel):
     if not isinstance(channel, Channel):
@@ -88,7 +88,7 @@ class User: # TODO: Client (Socket) stuff to be added
     if self in channel.users:
       channel.users.remove(self)
       
-    if channel.users == []:
+    if channel.get_users() == []:
       channel.unregister()
   
   @staticmethod
