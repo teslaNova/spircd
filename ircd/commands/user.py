@@ -41,7 +41,7 @@ class MODECommand(Command):
       return
       
     if len(param) > 1: # TODO: '-Oo' wird derzeit nicht akzeptiert
-      new_mode = param[2].strip(UserMode.Operator).strip(UserMode.LocalOperator)
+      new_mode = param[1].strip(UserMode.Operator).strip(UserMode.LocalOperator)
       
       if target.nick != sender.nick:
         Response.send_user(sender, 'ERR_USERSDONTMATCH')
@@ -143,9 +143,49 @@ class WHOCommand(Command):
     if not isinstance(sender, User):
       return
     
-    if len(param) < 1:
-      Response.send_user(sender, 'ERR_NEEDMOREPARAMS', self.name)
+    if len(param) >= 1:
+      operator_only = False
+      channel_name = param[0]
+      
+      if len(param) == 2 and param[1] == 'o':
+        operator_only = True
+      
+      if channel_name[0] in Config().misc['channel-prefix']:
+        channel = Channel.find_channel(channel_name)
+        
+        if None != channel:
+          users = [user for user in channel.get_users() if not user.mode.is_active(UserMode.Invisible)]
+          
+          for user in users:
+            status = 'H'
+            
+            if operator_only and not channel.has_operator(user):
+              continue
+            
+            if channel.has_operator(user):
+              status += '@'
+            
+            elif channel.has_voice(user):
+              status += '+'
+            
+            Response.send_user(sender, 'RPL_WHOREPLY',\
+              channel_name, user.user, user.host, user.server.host, user.nick, status, user.server.hop, user.real)
+              
+            Response.send_user(sender, 'RPL_ENDOFWHO', channel_name)
+            
+            return
+      
+      # TODO: No Channel -> Try Usermask
       return
+      
+    else: # TODO: Understand what the fuck _exactly_ happens
+      users = [user for user in User.users if not user.mode.is_active(UserMode.Invisible) and user.channels == []]
+      
+      for user in users:
+        Response.send_user(sender, 'RPL_WHOREPLY',\
+          '*', user.user, user.host, user.server.host, user.nick, 'H*', user.server.hop, user.real)
+          
+      Response.send_user(sender, 'RPL_ENDOFWHO', '*')
 
 
 class WHOISCommand(Command):
@@ -162,5 +202,5 @@ class WHOISCommand(Command):
       return
 
 # Init
-for cmd_class in [MODECommand, PRIVMSGCommand, AWAYCommand]: #WHOCommand, WHOISCommand
+for cmd_class in [MODECommand, PRIVMSGCommand, AWAYCommand, WHOCommand]: #WHOCommand, WHOISCommand
   Command.add(cmd_class)

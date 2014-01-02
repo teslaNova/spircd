@@ -91,7 +91,7 @@ class USERCommand(Command):
       
     sender.user = param[0]
 #    sender.mode.evaluate(param[1]) # do not set mode, we are lazy and don't want to verify them here
-    sender.real = ' '.join(param[2:]).lstrip(':')
+    sender.real = ' '.join(param[3:]).lstrip(':')
       
 class OPERCommand(Command):
   name = "OPER"
@@ -155,6 +155,24 @@ class QUITCommand(Command):
     
     sender.client.send("ERROR :" + reason) # Set alternative QUIT-Response
     sender.client.disconnect()  
+
+
+class PINGCommand(Command): # TODO: Implement correctly
+  name = "PING"
+  token = ""
+  desc = "Timeout check"
+  
+  def evaluate_local(self, sender, param):
+    if not isinstance(sender, User):
+      return
+      
+    if len(param) > 1:
+      Response.send_user(sender, 'ERR_NEEDMOREPARAMS', self.name)
+      return
+      
+    pong_str = param[0]
+    sender.client.send("PONG " + pong_str)
+      
     
 class PONGCommand(Command): # TODO: Implement correctly
   name = "PONG"
@@ -173,8 +191,8 @@ class PONGCommand(Command): # TODO: Implement correctly
       
     if sender.ping == pong_str:
       sender.ping = ''
-      sender.state[1] = 10 # 10 ticks no requests
+      sender.state[1] = 50 # 10 ticks no requests
 
 # Init
-for cmd_class in [PASSCommand, USERCommand, NICKCommand, OPERCommand, SERVICECommand, QUITCommand, PONGCommand]:
+for cmd_class in [PASSCommand, USERCommand, NICKCommand, OPERCommand, SERVICECommand, QUITCommand, PINGCommand, PONGCommand]:
   Command.add(cmd_class)
